@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Product - Apex Inventory</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-icon">📦</div>
+            <span>Apex Inventory</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="list.html" class="nav-link">Products</a>
+            <a href="listOne.html" class="nav-link">Search</a>
+            <a href="insert.html" class="nav-link">Add Product</a>
+            <a href="update.html" class="nav-link">Update</a>
+            <a href="delete.html" class="nav-link active">Delete</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="glass-card">
+            <!-- Dedicated Photo for Delete Page -->
+            <div class="page-banner" style="background-image: url('https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?auto=format&fit=crop&w=1200&q=80');">
+                <div class="banner-content">
+                    <h2>Delete Product</h2>
+                    <p>Safely delete discontinued inventory records from MySQL Workbench</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div id="alertBox" class="alert-toast"></div>
+
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem;">
+                    <h4 style="color: #f87171; margin-bottom: 0.4rem;">⚠️ Warning: Permanent Action</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Deleting a product cannot be undone. Enter the Product ID below and review details before confirming deletion.</p>
+                </div>
+
+                <div style="max-width: 540px;">
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label for="productSelect">Select Product to Delete</label>
+                        <select id="productSelect" onchange="onProductSelectChange(this.value)">
+                            <option value="">-- Choose a Product to Remove --</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Or enter ID directly:</span>
+                        <input type="number" id="productId" placeholder="e.g. 1" style="width: 120px; padding: 0.4rem 0.7rem; font-size: 0.85rem;" oninput="onManualIdInput(this.value)">
+                    </div>
+
+                    <div id="previewCard" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px dashed rgba(239, 68, 68, 0.35); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem;">
+                        <div style="font-size: 0.8rem; color: #f87171; text-transform: uppercase; font-weight: 700;">Selected for Deletion:</div>
+                        <div id="previewText" style="color: #fff; font-weight: 600; margin-top: 0.3rem;"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-danger" onclick="deleteProduct()">🗑️ Delete Product</button>
+                        <a href="list.html" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let productMap = {};
+
+        loadProductOptions();
+
+        function loadProductOptions() {
+            fetch("/products")
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.getElementById("productSelect");
+                    if (Array.isArray(data)) {
+                        data.forEach(p => {
+                            productMap[p.product_id] = p;
+                            const opt = document.createElement("option");
+                            opt.value = p.product_id;
+                            opt.innerText = `#${p.product_id} - ${p.product_name} (${p.category})`;
+                            select.appendChild(opt);
+                        });
+                    }
+                })
+                .catch(err => console.error("Error loading products:", err));
+        }
+
+        function onProductSelectChange(id) {
+            document.getElementById("productId").value = id || "";
+            updatePreview(id);
+        }
+
+        function onManualIdInput(val) {
+            const select = document.getElementById("productSelect");
+            select.value = val || "";
+            updatePreview(val);
+        }
+
+        function updatePreview(id) {
+            const previewCard = document.getElementById("previewCard");
+            const previewText = document.getElementById("previewText");
+            if (id && productMap[id]) {
+                const p = productMap[id];
+                previewText.innerText = `#${p.product_id} • ${p.product_name} | Price: ₹${Number(p.price).toFixed(2)} | Qty: ${p.quantity}`;
+                previewCard.style.display = "block";
+            } else {
+                previewCard.style.display = "none";
+            }
+        }
+
+        function showAlert(msg, isError) {
+            const el = document.getElementById("alertBox");
+            el.className = `alert-toast ${isError ? 'alert-danger' : 'alert-success'}`;
+            el.innerText = msg;
+            el.style.display = 'block';
+        }
+
+        function deleteProduct() {
+            const pid = document.getElementById("productId").value.trim() || document.getElementById("productSelect").value;
+            if (!pid) {
+                showAlert("Please select or enter a Product ID to delete", true);
+                return;
+            }
+
+            const p = productMap[pid];
+            const nameStr = p ? ` "${p.product_name}"` : '';
+
+            if (!confirm(`Are you sure you want to permanently delete Product #${pid}${nameStr}?`)) {
+                return;
+            }
+
+            fetch("/products/" + pid, {
+                method: "DELETE"
+            })
+            .then(res => {
+                return res.json().then(data => {
+                    if (!res.ok) throw new Error(data.message || data.error || "Delete failed");
+                    return data;
+                });
+            })
+            .then(data => {
+                showAlert("Success: " + (data.message || "Product deleted successfully"), false);
+                setTimeout(() => {
+                    location.href = "list.html";
+                }, 1200);
+            })
+            .catch(err => {
+                showAlert(err.message, true);
+            });
+        }
+    </script>
+</body>
+</html>

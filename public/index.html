@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Inventory - Product Management Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-icon">📦</div>
+            <span>Apex Inventory</span>
+            <span class="brand-badge" id="dbStatus">MySQL Live</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link active">Dashboard</a>
+            <a href="list.html" class="nav-link">Products</a>
+            <a href="listOne.html" class="nav-link">Search</a>
+            <a href="insert.html" class="nav-link">Add Product</a>
+            <a href="update.html" class="nav-link">Update</a>
+            <a href="delete.html" class="nav-link">Delete</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Live KPI Stats Strip -->
+        <div class="stats-strip">
+            <div class="stat-box">
+                <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">📊</div>
+                <div>
+                    <div class="stat-value" id="statTotalItems">10</div>
+                    <div class="stat-label">Total SKUs</div>
+                </div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">📦</div>
+                <div>
+                    <div class="stat-value" id="statTotalUnits">264</div>
+                    <div class="stat-label">Units in Stock</div>
+                </div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #38bdf8;">💰</div>
+                <div>
+                    <div class="stat-value" id="statValuation">$65.8k</div>
+                    <div class="stat-label">Stock Valuation</div>
+                </div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⚡</div>
+                <div>
+                    <div class="stat-value" id="statLowStock">0</div>
+                    <div class="stat-label">Low Stock Alerts</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="margin-bottom: 2.25rem;">
+            <!-- Dedicated High-Res Warehouse Automation Photo -->
+            <div class="page-banner" style="background-image: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1400&q=85');">
+                <div class="banner-content">
+                    <span class="banner-pill">Enterprise Edition • MySQL Workbench</span>
+                    <h2>Product Inventory Management System</h2>
+                    <p>Perform live CRUD operations on your product catalog with synchronized database tracking, valuation metrics, and stock thresholds.</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.25rem; font-weight: 700;">Inventory Operations</h3>
+
+        <div class="dashboard-grid">
+            <a href="list.html" class="action-card">
+                <div class="card-photo-wrapper">
+                    <img src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=700&q=80" alt="Product Catalog" class="card-photo">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-tag">Operation 01 • Read</div>
+                        <h3>Browse Catalog</h3>
+                        <p>View all 10 active products in the MySQL database with real-time stock status and sorting.</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="listOne.html" class="action-card">
+                <div class="card-photo-wrapper">
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=700&q=80" alt="Search Product" class="card-photo">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-tag">Operation 02 • Filter</div>
+                        <h3>Search by Product ID</h3>
+                        <p>Instantly fetch complete specification, category, and pricing breakdown for any SKU.</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="insert.html" class="action-card">
+                <div class="card-photo-wrapper">
+                    <img src="https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&w=700&q=80" alt="Insert Product" class="card-photo">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-tag">Operation 03 • Create</div>
+                        <h3>Add New Product</h3>
+                        <p>Register new merchandise with unit price, stock volume, and safety reorder margins.</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="update.html" class="action-card">
+                <div class="card-photo-wrapper">
+                    <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=700&q=80" alt="Update Product" class="card-photo">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-tag">Operation 04 • Update</div>
+                        <h3>Update Product</h3>
+                        <p>Pre-fill product specifications into the editor to safely update quantities and prices.</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="delete.html" class="action-card">
+                <div class="card-photo-wrapper">
+                    <img src="https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?auto=format&fit=crop&w=700&q=80" alt="Delete Product" class="card-photo">
+                </div>
+                <div class="card-content">
+                    <div>
+                        <div class="card-tag">Operation 05 • Delete</div>
+                        <h3>Remove Product</h3>
+                        <p>Permanently remove discontinued items from the MySQL database with confirmation check.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Fetch live database statistics
+        fetch("/products")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    document.getElementById("statTotalItems").innerText = data.length;
+                    
+                    const totalUnits = data.reduce((acc, p) => acc + Number(p.quantity || 0), 0);
+                    document.getElementById("statTotalUnits").innerText = totalUnits.toLocaleString();
+
+                    const valuation = data.reduce((acc, p) => acc + (Number(p.price || 0) * Number(p.quantity || 0)), 0);
+                    document.getElementById("statValuation").innerText = "₹" + (valuation >= 1000 ? (valuation / 1000).toFixed(1) + "k" : valuation);
+
+                    const lowStockCount = data.filter(p => Number(p.quantity) <= Number(p.reorder_level)).length;
+                    document.getElementById("statLowStock").innerText = lowStockCount;
+                }
+            })
+            .catch(err => {
+                const statusBadge = document.getElementById("dbStatus");
+                statusBadge.innerText = "DB Offline";
+                statusBadge.style.background = "rgba(244, 63, 94, 0.15)";
+                statusBadge.style.color = "#f43f5e";
+            });
+    </script>
+</body>
+</html>

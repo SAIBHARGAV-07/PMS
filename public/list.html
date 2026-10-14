@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Products - Apex Inventory</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-icon">📦</div>
+            <span>Apex Inventory</span>
+            <span class="brand-badge">MySQL Live</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="list.html" class="nav-link active">Products</a>
+            <a href="listOne.html" class="nav-link">Search</a>
+            <a href="insert.html" class="nav-link">Add Product</a>
+            <a href="update.html" class="nav-link">Update</a>
+            <a href="delete.html" class="nav-link">Delete</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="glass-card">
+            <!-- Dedicated Image Banner for Products Catalog -->
+            <div class="page-banner" style="background-image: url('https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1400&q=85');">
+                <div class="banner-content">
+                    <span class="banner-pill">Live Database Catalog</span>
+                    <h2>Product Inventory Catalog</h2>
+                    <p>Real-time inventory records queried directly from MySQL database <code>product_management_system</code></p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span id="productCount" style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 600;">Loading products...</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label for="categoryFilter" style="margin: 0; font-size: 0.8rem; text-transform: none; color: var(--text-muted);">Category:</label>
+                            <select id="categoryFilter" onchange="filterByCategory(this.value)" style="padding: 0.45rem 0.9rem; font-size: 0.88rem; width: auto; min-width: 170px;">
+                                <option value="ALL">All Categories</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-secondary" onclick="loadProducts()">🔄 Refresh Catalog</button>
+                        <a href="insert.html" class="btn btn-primary">+ Add New Product</a>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Product Details</th>
+                                <th>Category</th>
+                                <th>Unit Price</th>
+                                <th>Stock Quantity</th>
+                                <th>Reorder Level</th>
+                                <th>Status</th>
+                                <th>Quick Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 3rem;">Loading records from database...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allProducts = [];
+        let selectedCategory = "ALL";
+
+        loadProducts();
+
+        function populateCategoryDropdown(products) {
+            const selectEl = document.getElementById("categoryFilter");
+            const currentVal = selectEl.value;
+            const categories = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
+
+            selectEl.innerHTML = `<option value="ALL">All Categories (${products.length})</option>`;
+            categories.forEach(cat => {
+                const count = products.filter(p => p.category === cat).length;
+                const opt = document.createElement("option");
+                opt.value = cat;
+                opt.innerText = `${cat} (${count})`;
+                selectEl.appendChild(opt);
+            });
+
+            if (categories.includes(currentVal)) {
+                selectEl.value = currentVal;
+            } else {
+                selectEl.value = "ALL";
+                selectedCategory = "ALL";
+            }
+        }
+
+        function filterByCategory(category) {
+            selectedCategory = category;
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById("productTableBody");
+            const countEl = document.getElementById("productCount");
+
+            let filtered = allProducts;
+            if (selectedCategory && selectedCategory !== "ALL") {
+                filtered = allProducts.filter(p => p.category === selectedCategory);
+            }
+
+            if (!filtered || filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">No products found in this category.</td></tr>`;
+                countEl.innerText = `0 of ${allProducts.length} products displayed`;
+                return;
+            }
+
+            countEl.innerText = selectedCategory === "ALL" 
+                ? `Displaying all ${allProducts.length} products in stock` 
+                : `Displaying ${filtered.length} of ${allProducts.length} products in "${selectedCategory}"`;
+
+            tbody.innerHTML = "";
+
+            filtered.forEach(p => {
+                const isLowStock = Number(p.quantity) <= Number(p.reorder_level);
+                const isCritical = Number(p.quantity) === 0;
+                
+                let badgeClass = 'badge-in-stock';
+                let badgeText = '● In Stock';
+                
+                if (isCritical) {
+                    badgeClass = 'badge-critical';
+                    badgeText = '✕ Out of Stock';
+                } else if (isLowStock) {
+                    badgeClass = 'badge-low-stock';
+                    badgeText = '▲ Low Stock';
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="sku-text">#${p.product_id}</span></td>
+                        <td>
+                            <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${p.product_name}</div>
+                        </td>
+                        <td><span class="category-tag">${p.category}</span></td>
+                        <td><span class="price-text">₹${Number(p.price).toFixed(2)}</span></td>
+                        <td>
+                            <span style="font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace;">${p.quantity}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">units</span>
+                        </td>
+                        <td>
+                            <span style="color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${p.reorder_level}</span>
+                        </td>
+                        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem;">
+                                <button class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem;" onclick="location.href='update.html?id=${p.product_id}'">✏️ Edit</button>
+                                <button class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; color: #f87171;" onclick="deleteDirect(${p.product_id}, '${p.product_name.replace(/'/g, "\\'")}')">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function loadProducts() {
+            fetch("/products")
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById("productTableBody");
+                    const countEl = document.getElementById("productCount");
+                    
+                    if (!Array.isArray(data) || data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">No products found in database. Click '+ Add New Product' to register one.</td></tr>`;
+                        countEl.innerText = "0 products found";
+                        allProducts = [];
+                        return;
+                    }
+
+                    allProducts = data;
+                    populateCategoryDropdown(data);
+                    renderProducts();
+                })
+                .catch(err => {
+                    document.getElementById("productTableBody").innerHTML = `
+                        <tr><td colspan="8" style="text-align: center; color: var(--rose); padding: 3rem;">Error querying database: ${err.message}</td></tr>
+                    `;
+                });
+        }
+
+        function deleteDirect(id, name) {
+            if (confirm(`Are you sure you want to delete "${name}" (ID #${id})?`)) {
+                fetch("/products/" + id, { method: "DELETE" })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message || "Product deleted");
+                        loadProducts();
+                    })
+                    .catch(err => alert("Error: " + err.message));
+            }
+        }
+    </script>
+</body>
+</html>

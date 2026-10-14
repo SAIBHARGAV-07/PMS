@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Product - Apex Inventory</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-icon">📦</div>
+            <span>Apex Inventory</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="list.html" class="nav-link">Products</a>
+            <a href="listOne.html" class="nav-link active">Search</a>
+            <a href="insert.html" class="nav-link">Add Product</a>
+            <a href="update.html" class="nav-link">Update</a>
+            <a href="delete.html" class="nav-link">Delete</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="glass-card">
+            <!-- Dedicated Photo for Search Page -->
+            <div class="page-banner" style="background-image: url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80');">
+                <div class="banner-content">
+                    <h2>Search Product by ID</h2>
+                    <p>Lookup accurate details and real-time stock levels for any SKU or product ID</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div id="alertBox" class="alert-toast"></div>
+
+                <div style="background: rgba(10, 14, 23, 0.6); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; max-width: 600px;">
+                    <label for="productSelect">Select Product from Database</label>
+                    <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                        <select id="productSelect" onchange="onProductSelectChange(this.value)" style="flex: 1; min-width: 250px;">
+                            <option value="">-- Choose a Product --</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="searchProduct()">🔍 Search</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Or enter ID manually:</span>
+                        <input type="number" id="productId" placeholder="e.g. 1, 2" style="width: 110px; padding: 0.4rem 0.7rem; font-size: 0.85rem;" oninput="onManualIdInput(this.value)">
+                    </div>
+                </div>
+
+                <div id="resultCard" style="display: none; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 1.5rem;">
+                    <h3 id="resName" style="color: #fff; font-size: 1.3rem; margin-bottom: 0.5rem;"></h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-top: 1.2rem;">
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Product ID</span>
+                            <p id="resId" style="font-size: 1.1rem; font-weight: 700; color: #818cf8; margin-top: 0.2rem;"></p>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Category</span>
+                            <p id="resCat" style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-top: 0.2rem;"></p>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Unit Price</span>
+                            <p id="resPrice" style="font-size: 1.1rem; font-weight: 700; color: #34d399; margin-top: 0.2rem;"></p>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Quantity in Stock</span>
+                            <p id="resQty" style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-top: 0.2rem;"></p>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Reorder Level</span>
+                            <p id="resReorder" style="font-size: 1.1rem; font-weight: 600; color: #fbbf24; margin-top: 0.2rem;"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load all available products into dropdown on page load
+        loadProductOptions();
+
+        function loadProductOptions() {
+            fetch("/products")
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.getElementById("productSelect");
+                    if (Array.isArray(data)) {
+                        data.forEach(p => {
+                            const opt = document.createElement("option");
+                            opt.value = p.product_id;
+                            opt.innerText = `#${p.product_id} - ${p.product_name} (${p.category})`;
+                            select.appendChild(opt);
+                        });
+                    }
+                })
+                .catch(err => console.error("Error loading products:", err));
+        }
+
+        function onProductSelectChange(id) {
+            if (id) {
+                document.getElementById("productId").value = id;
+                searchProduct();
+            }
+        }
+
+        function onManualIdInput(val) {
+            const select = document.getElementById("productSelect");
+            select.value = val || "";
+        }
+
+        function showAlert(msg, isError) {
+            const el = document.getElementById("alertBox");
+            el.className = `alert-toast ${isError ? 'alert-danger' : 'alert-success'}`;
+            el.innerText = msg;
+            el.style.display = 'block';
+        }
+
+        function searchProduct() {
+            const pid = document.getElementById("productId").value.trim() || document.getElementById("productSelect").value;
+            const alertBox = document.getElementById("alertBox");
+            const resultCard = document.getElementById("resultCard");
+
+            alertBox.style.display = 'none';
+            resultCard.style.display = 'none';
+
+            if (!pid) {
+                showAlert("Please select or enter a valid Product ID", true);
+                return;
+            }
+
+            fetch("/products/" + pid)
+                .then(res => {
+                    if (!res.ok) throw new Error("Product with ID #" + pid + " was not found in the database");
+                    return res.json();
+                })
+                .then(p => {
+                    document.getElementById("productId").value = p.product_id;
+                    document.getElementById("productSelect").value = p.product_id;
+                    document.getElementById("resName").innerText = p.product_name;
+                    document.getElementById("resId").innerText = "#" + p.product_id;
+                    document.getElementById("resCat").innerText = p.category;
+                    document.getElementById("resPrice").innerText = "₹" + Number(p.price).toFixed(2);
+                    document.getElementById("resQty").innerText = p.quantity + " units";
+                    document.getElementById("resReorder").innerText = p.reorder_level + " units";
+
+                    resultCard.style.display = 'block';
+                })
+                .catch(err => {
+                    showAlert(err.message, true);
+                });
+        }
+    </script>
+</body>
+</html>
